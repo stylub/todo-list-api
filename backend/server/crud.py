@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
-import database
-import models
+from . import database
+from . import models
+
+
 
 def create_todolist(db: Session, todo_list: models.ToDoListBase):
     db_list = database.ToDoList(title=todo_list.title)
