@@ -12,7 +12,7 @@ def create_todolist(
         current_user: models.User  
         ):
     try:
-        db_list = database.ToDoList(title=todo_list.title)
+        db_list = database.ToDoList(title=todo_list.title,user_id=current_user.id)
         db.add(db_list)
         db.commit()
         db.refresh(db_list)
@@ -39,9 +39,9 @@ def create_new_task(db: Session, task: models.TaskCreate, list_id: int):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_all_todo_lists(db: Session):
+def get_all_todo_lists(db: Session, current_user: models.User):
     try:
-        return db.query(database.ToDoList).all()
+        return db.query(database.ToDoList).filter(database.ToDoList.user_id == current_user.id).all()
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -56,9 +56,9 @@ def get_todo_list_by_id(db: Session, todo_list_id: int):
         return db.query(database.ToDoList).filter(database.ToDoList.id == todo_list_id).first()
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
-def create_user_supa(user:models.UserCreate):
+
+def create_user(user:models.UserCreate):
     supabase = db_config.get_supabase_client()
 
     response = supabase.auth.sign_up({

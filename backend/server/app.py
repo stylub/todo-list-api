@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import List, Annotated
 
 from dotenv import load_dotenv
-from .models import Task, ToDoList,ToDoListCreate,UserCreate, User, Tokens
+from .models import Task, ToDoList,ToDoListCreate,UserCreate, User, Tokens,TaskCreate
 from . import crud
 
 from .database import db_config
@@ -24,12 +24,19 @@ def get_db():
         db.close()
 
 @app.post('/add_todolist', response_model=ToDoListCreate)
-def create_todolist(todo_list: ToDoListCreate, db = Depends(get_db)):
-    return crud.create_todolist(db=db,todo_list=todo_list)
+def create_todolist(
+        todo_list: ToDoListCreate,
+        current_user: Annotated[User, Depends(crud.get_user)],
+        db = Depends(get_db)
+    ):
+    return crud.create_todolist(db=db,todo_list=todo_list,current_user=current_user)
 
 @app.get('/todolist', response_model=List[ToDoList])
-def get_all_todo_lists(db = Depends(get_db)):
-    return crud.get_all_todo_lists(db)
+def get_all_todo_lists(
+        current_user: Annotated[User, Depends(crud.get_user)],
+        db = Depends(get_db)
+    ):
+    return crud.get_all_todo_lists(db,current_user)
 
 @app.post('/todolist/{todolist_id}/tasks', response_model=List[Task])
 def read_tasks(todolist_id: int, db = Depends(get_db)):
@@ -39,9 +46,20 @@ def read_tasks(todolist_id: int, db = Depends(get_db)):
 def get_one_todolist(todolist_id: int, db = Depends(get_db)):
     return crud.get_list_with_tasks(db,todolist_id)
 
-@app.post('/user/register/supa',response_model=Tokens)
+@app.post('/todolist/{todolist_id}/task/add',response_model=Task)
+def add_task_to_todolist(
+        todo_list_id: int,
+        task: TaskCreate,
+        _current_user: Annotated[User, Depends(crud.get_user)],
+        db = Depends(get_db)
+    ):
+    return crud.create_new_task(db,task,todo_list_id)
+
+
+
+@app.post('/user/register',response_model=Tokens)
 async def user_register(user:UserCreate):
-    return await crud.create_user_supa(user)
+    return await crud.create_user(user)
 
 @app.post('/user/login',response_model=Tokens)
 def user_login(user:UserCreate):
