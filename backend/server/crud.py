@@ -2,10 +2,15 @@ from sqlalchemy.orm import Session
 from . import database
 from . import models
 
+from .database import db_config
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 
-def create_todolist(db: Session, todo_list: models.ToDoListBase):
+def create_todolist(
+        db: Session, 
+        todo_list: models.ToDoListBase,
+        current_user: models.User  
+        ):
     try:
         db_list = database.ToDoList(title=todo_list.title)
         db.add(db_list)
@@ -51,3 +56,46 @@ def get_todo_list_by_id(db: Session, todo_list_id: int):
         return db.query(database.ToDoList).filter(database.ToDoList.id == todo_list_id).first()
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+def create_user_supa(user:models.UserCreate):
+    supabase = db_config.get_supabase_client()
+
+    response = supabase.auth.sign_up({
+        "email": user.email,
+        "password": user.password 
+    })
+
+    return models.Tokens(
+        access_token=response.session.access_token,
+        refresh_token=response.session.refresh_token
+    )
+
+def login(user: models.UserCreate):
+    supabase = db_config.get_supabase_client()
+
+    try:
+        response = supabase.auth.sign_in_with_password({
+            "email": user.email, 
+            "password": user.password
+        })
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    return models.Tokens(
+        access_token=response.session.access_token,
+        refresh_token=response.session.refresh_token
+    )
+
+def get_user(jwt:str):
+    supabase = db_config.get_supabase_client()
+
+    try:
+        response = supabase.auth.get_user(jwt)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    return models.User(
+        id=response.user.id,
+        email=response.user.email
+    )

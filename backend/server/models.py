@@ -28,3 +28,25 @@ class ToDoList(ToDoListBase):
 
 class ToDoListCreate(ToDoListBase):
     taskList: List[TaskCreate]
+
+class UserBase(BaseModel):
+    email: str
+class options():
+   email_redirect_to:str = "http://0.0.0.0:8000"
+class UserCreate(UserBase):
+   password: str
+class UserDatabase(UserCreate):
+  options: options
+  class Config: 
+    from_attributes = True
+    arbitrary_types_allowed = True
+class User(UserBase):
+   id: str
+   
+
+   class Config:
+      from_attributes = True
+
+class Tokens(BaseModel):
+   access_token: str
+   refresh_token: str
