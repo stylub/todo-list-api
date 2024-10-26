@@ -4,3 +4,4 @@ sqlalchemy==2.0.34
 sqlalchemy[asyncio] 
 pydantic==2.9.0
 asyncpg==0.29.0 
+python-dotenv==1.0.1
