@@ -62,6 +62,20 @@ def get_todo_list_by_id(db: Session, current_user:models.User, todo_list_id: int
 
     return todo_list
 
+def finish_task(db: Session, task_id: int,todo_list_id:int, current_user: models.User):
+    todo_list = get_todo_list_by_id(db, current_user, todo_list_id)
+    try:
+        task = db.query(database.Task).filter(database.Task.id == task_id).first()
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    if  task.todo_list_id != todo_list_id:
+        raise HTTPException(status_code=403, detail="You don't have access to this task")
+
+    task.finished = True
+    db.commit()
+    db.refresh(task)
+    return task
 
 def create_user(user:models.UserCreate):
     supabase = db_config.get_supabase_client()
