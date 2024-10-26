@@ -3,7 +3,7 @@ from typing import List
 
 class TaskBase(BaseModel):
     text_content: str
-
+    description: str
 
 class Task(TaskBase):
     id: int

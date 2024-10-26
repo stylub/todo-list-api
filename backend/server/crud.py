@@ -29,6 +29,7 @@ def create_new_task(db: Session, task: models.TaskCreate, list_id: int):
     try:
         db_task = database.Task(
             text_content=task.text_content,
+            description=task.description,
             todo_list_id=list_id
         )
         db.add(db_task)
@@ -45,17 +46,21 @@ def get_all_todo_lists(db: Session, current_user: models.User):
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_tasks_by_todolist(db: Session, todo_list_id: int):
-    try:
-        return db.query(database.Task).filter(database.Task.todo_list_id == todo_list_id).all()
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def get_tasks_by_todolist(db: Session,current_user:models.User, todo_list_id: int):
+    todo_list = get_todo_list_by_id(db, current_user, todo_list_id=todo_list_id)
+        
+    return todo_list.taskList
 
-def get_todo_list_by_id(db: Session, todo_list_id: int):
+def get_todo_list_by_id(db: Session, current_user:models.User, todo_list_id: int):
     try:
-        return db.query(database.ToDoList).filter(database.ToDoList.id == todo_list_id).first()
+        todo_list = db.query(database.ToDoList).filter(database.ToDoList.id == todo_list_id).first()
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    if current_user.id != todo_list.user_id:
+        raise HTTPException(status_code=403, detail="You don't have access to this list")
+
+    return todo_list
 
 
 def create_user(user:models.UserCreate):
@@ -86,6 +91,20 @@ def login(user: models.UserCreate):
         access_token=response.session.access_token,
         refresh_token=response.session.refresh_token
     )
+
+def refresh_session(refresh_token: str):
+    supabase = db_config.get_supabase_client()
+
+    try:
+        response = supabase.auth.refresh_session(refresh_token)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    return models.Tokens(
+        access_token=response.session.access_token,
+        refresh_token=response.session.refresh_token
+    )
+
 
 def get_user(jwt:str):
     supabase = db_config.get_supabase_client()

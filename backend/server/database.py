@@ -44,6 +44,7 @@ class Task(Base):
     __tablename__ = 'task'
     id: Mapped[int] = mapped_column(primary_key=True)
     text_content: Mapped[str]
+    description: Mapped[str]
     finished: Mapped[bool] = mapped_column(default=False)
     todo_list_id: Mapped[int] = mapped_column(ForeignKey('todolist.id'))
     todo_list: Mapped['ToDoList'] = relationship('ToDoList', back_populates='taskList')
